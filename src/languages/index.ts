@@ -1,4 +1,5 @@
 import { devotee } from "./devotee";
+import { warrior } from "./warrior";
 import type { LanguageId, LanguageModule } from "./types";
 
 /** Tab order follows the climb up the tower. */
@@ -10,7 +11,7 @@ export const LANGUAGE_ORDER: readonly LanguageId[] = [
   "anchorite",
 ];
 
-const implemented: Partial<Record<LanguageId, LanguageModule>> = { devotee };
+const implemented: Partial<Record<LanguageId, LanguageModule>> = { devotee, warrior };
 
 export const getLanguage = (id: LanguageId): LanguageModule | undefined => implemented[id];
 
