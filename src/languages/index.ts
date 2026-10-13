@@ -1,3 +1,4 @@
+import { alchemist } from "./alchemist";
 import { bard } from "./bard";
 import { devotee } from "./devotee";
 import { warrior } from "./warrior";
@@ -12,7 +13,12 @@ export const LANGUAGE_ORDER: readonly LanguageId[] = [
   "anchorite",
 ];
 
-const implemented: Partial<Record<LanguageId, LanguageModule>> = { devotee, warrior, bard };
+const implemented: Partial<Record<LanguageId, LanguageModule>> = {
+  devotee,
+  warrior,
+  bard,
+  alchemist,
+};
 
 export const getLanguage = (id: LanguageId): LanguageModule | undefined => implemented[id];
 
