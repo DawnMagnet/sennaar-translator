@@ -8,6 +8,8 @@ export interface GlyphPath {
   d: string;
   /** SVG transform applied to this path only. */
   t?: string;
+  /** Fill with the even-odd rule, so overlapping subpaths cancel out (an XOR of the shapes). */
+  evenodd?: boolean;
 }
 
 export interface GlyphData {

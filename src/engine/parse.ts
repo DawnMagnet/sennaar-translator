@@ -9,7 +9,8 @@ const TOKEN = /[A-Za-z]+(?:['’][A-Za-z]+)?|[㐀-鿿]+|\d+/g;
 
 const EN_FUNCTION_WORDS = new Set(
   `a an the to of is am are was were be been being do does did will would shall should can could
-   may might must and or but please that this these those there here very`.split(/\s+/),
+   may might must and or but please that this these those there here very
+   for with in on at by from into`.split(/\s+/),
 );
 const EN_THIRD_PERSON = new Set([
   "he",

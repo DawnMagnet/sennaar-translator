@@ -76,7 +76,10 @@ export function composeSvg(
       const glyph = glyphOf(language, cell.glyph);
       const w = boxWidth(language, glyph);
       const paths = glyph.paths
-        .map(({ d, t }) => `<path d="${d}"${t ? ` transform="${t}"` : ""}/>`)
+        .map(
+          ({ d, t, evenodd }) =>
+            `<path d="${d}"${t ? ` transform="${t}"` : ""}${evenodd ? ' fill-rule="evenodd"' : ""}/>`,
+        )
         .join("");
       parts.push(
         `<g transform="translate(${num(x - originX(language, glyph))} ${num(y + top - glyph.a)})">${paths}</g>`,

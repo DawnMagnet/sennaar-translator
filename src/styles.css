@@ -173,11 +173,23 @@ main,
   opacity: 0.85;
 }
 
-.lang-toggle {
+.corner {
   position: fixed;
   top: 14px;
   right: 16px;
   z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+a.btn {
+  text-decoration: none;
+}
+
+.github .icon {
+  width: 1.25em;
+  height: 1.25em;
 }
 
 .tabs {
@@ -785,9 +797,12 @@ button:focus-visible,
   .tablet {
     padding-inline: 16px;
   }
-  .lang-toggle {
+  .corner {
     top: 10px;
     right: 10px;
+  }
+  .github__label {
+    display: none;
   }
 }
 

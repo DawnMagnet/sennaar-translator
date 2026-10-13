@@ -46,10 +46,11 @@ export function glyphElement(language: LanguageModule, id: string): SVGSVGElemen
   const group = document.createElementNS(SVG_NS, "g");
   group.setAttribute("transform", `translate(0 ${-glyph.a})`);
   group.setAttribute("fill", "currentColor");
-  for (const { d, t } of glyph.paths) {
+  for (const { d, t, evenodd } of glyph.paths) {
     const path = document.createElementNS(SVG_NS, "path");
     path.setAttribute("d", d);
     if (t) path.setAttribute("transform", t);
+    if (evenodd) path.setAttribute("fill-rule", "evenodd");
     group.append(path);
   }
   svg.append(group);

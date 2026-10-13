@@ -6,6 +6,7 @@ import { readdirSync, readFileSync, writeFileSync } from "node:fs";
 import type { Entry } from "../src/engine/types.ts";
 import { ALCHEMIST_LEXICON } from "../src/languages/alchemist/lexicon.ts";
 import { ANCHORITE_LEXICON } from "../src/languages/anchorite/lexicon.ts";
+import { CELL_CENTER, offsetOf } from "../src/languages/anchorite/offsets.ts";
 import { BARD_LEXICON } from "../src/languages/bard/lexicon.ts";
 import { WARRIOR_LEXICON } from "../src/languages/warrior/lexicon.ts";
 
@@ -29,7 +30,7 @@ interface Source {
   /** Fraction of the tallest glyph used as padding around every cell. */
   pad: number;
   /** The y coordinate (in the glyph's own coordinates) that lies on the shared alignment line. */
-  align(info: Info): number;
+  align(info: Info, id: string): number;
   /** Extra paths added to every glyph, given its alignment line and the cell padding. */
   extend?(info: Info, a: number, pad: number): string[];
 }
@@ -116,7 +117,13 @@ const SOURCES: Source[] = [
   { id: "warrior", lexicon: WARRIOR_LEXICON, pad: 0.1, align: ({ h }) => h / 2 },
   { id: "bard", lexicon: BARD_LEXICON, pad: 0.1, align: bardBaseline, extend: bardBar },
   { id: "alchemist", lexicon: ALCHEMIST_LEXICON, pad: 0.1, align: ({ h }) => h / 2 },
-  { id: "anchorite", lexicon: ANCHORITE_LEXICON, pad: 0.1, align: ({ h }) => h / 2 },
+  {
+    id: "anchorite",
+    lexicon: ANCHORITE_LEXICON,
+    pad: 0.1,
+    // Cropped glyphs keep the place they have inside the 101 x 101 cell.
+    align: (_, id) => CELL_CENTER - offsetOf(id)[1],
+  },
 ];
 
 for (const source of SOURCES) {
@@ -140,7 +147,7 @@ for (const source of SOURCES) {
     throw new Error(`${source.id}: source files not in the lexicon: ${unused.join(", ")}`);
   }
 
-  const aligned = [...infos].map(([id, info]) => ({ id, info, a: source.align(info) }));
+  const aligned = [...infos].map(([id, info]) => ({ id, info, a: source.align(info, id) }));
   const above = Math.max(...aligned.map(({ a }) => a));
   const below = Math.max(...aligned.map(({ info, a }) => info.h - a));
   const maxH = Math.max(...aligned.map(({ info }) => info.h));

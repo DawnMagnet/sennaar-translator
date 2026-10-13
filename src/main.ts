@@ -1,5 +1,5 @@
 import "./styles.css";
-import { iconMarkup, type IconName } from "./art/icons";
+import { githubMarkup, iconMarkup, type IconName } from "./art/icons";
 import { logoSvg } from "./art/logo";
 import { sceneMarkup } from "./art/scene";
 import { PALETTE } from "./art/util";
@@ -8,6 +8,7 @@ import type { Entry, Translation } from "./engine/types";
 import { label, t, tabKey, typedForm, type Lang } from "./i18n";
 import { LANGUAGE_ORDER, getLanguage, isLanguageId } from "./languages";
 import type { LanguageId } from "./languages/types";
+import { REPO_URL } from "./site";
 import { composeSvg, download, svgToPng, type ExportCell } from "./render/export";
 import { renderDictionary } from "./ui/dictionary";
 import { clear, fromMarkup, h } from "./ui/dom";
@@ -36,7 +37,7 @@ const lang: Lang =
     : navigator.language.toLowerCase().startsWith("zh")
       ? "zh"
       : "en";
-const initialId: LanguageId = isLanguageId(hashTab) && getLanguage(hashTab) ? hashTab : "devotee";
+const initialId: LanguageId = isLanguageId(hashTab) ? hashTab : "devotee";
 
 const state: State = {
   lang,
@@ -50,7 +51,7 @@ let current: Translation = { lines: [] };
 let hashTimer: ReturnType<typeof setTimeout> | undefined;
 
 const app = document.getElementById("app")!;
-const activeLanguage = () => getLanguage(state.languageId)!;
+const activeLanguage = () => getLanguage(state.languageId);
 const defaultText = () => activeLanguage().content.examples[state.lang][1] ?? "";
 const currentText = () => state.texts[state.languageId] ?? defaultText();
 
@@ -192,39 +193,52 @@ function build(): void {
         ),
       ),
       h(
-        "button",
-        {
-          type: "button",
-          class: "btn btn--ghost lang-toggle",
-          "aria-label": "Switch language",
-          onclick: () => {
-            state.lang = lang === "zh" ? "en" : "zh";
-            syncHash();
-            build();
+        "div",
+        { class: "corner" },
+        h(
+          "a",
+          {
+            class: "btn btn--ghost github",
+            href: REPO_URL,
+            target: "_blank",
+            rel: "noopener noreferrer",
+            title: t(lang, "githubTitle"),
+            "aria-label": t(lang, "githubTitle"),
           },
-        },
-        lang === "zh" ? "EN" : "中文",
+          fromMarkup(githubMarkup()),
+          h("span", { class: "github__label" }, "GitHub"),
+        ),
+        h(
+          "button",
+          {
+            type: "button",
+            class: "btn btn--ghost lang-toggle",
+            "aria-label": "Switch language",
+            onclick: () => {
+              state.lang = lang === "zh" ? "en" : "zh";
+              syncHash();
+              build();
+            },
+          },
+          lang === "zh" ? "EN" : "中文",
+        ),
       ),
     ),
     h(
       "nav",
       { class: "tabs" },
-      ...LANGUAGE_ORDER.map((id) => {
-        const available = getLanguage(id) !== undefined;
-        return h(
+      ...LANGUAGE_ORDER.map((id) =>
+        h(
           "button",
           {
             type: "button",
             class: "tab",
-            disabled: !available,
             "aria-current": id === state.languageId ? "page" : null,
-            title: available ? null : t(lang, "comingSoon"),
             onclick: () => selectLanguage(id),
           },
-          !available && fromMarkup(iconMarkup("lock")),
           t(lang, tabKey[id]),
-        );
-      }),
+        ),
+      ),
     ),
     h(
       "main",
