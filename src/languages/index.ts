@@ -1,3 +1,4 @@
+import { bard } from "./bard";
 import { devotee } from "./devotee";
 import { warrior } from "./warrior";
 import type { LanguageId, LanguageModule } from "./types";
@@ -11,7 +12,7 @@ export const LANGUAGE_ORDER: readonly LanguageId[] = [
   "anchorite",
 ];
 
-const implemented: Partial<Record<LanguageId, LanguageModule>> = { devotee, warrior };
+const implemented: Partial<Record<LanguageId, LanguageModule>> = { devotee, warrior, bard };
 
 export const getLanguage = (id: LanguageId): LanguageModule | undefined => implemented[id];
 

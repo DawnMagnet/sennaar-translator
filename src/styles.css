@@ -805,3 +805,27 @@ button:focus-visible,
   font-size: 0.92rem;
   opacity: 0.85;
 }
+
+.line--connected {
+  padding-bottom: 3.4em;
+}
+
+.line--connected .cell {
+  position: relative;
+}
+
+.line--connected .cell figcaption,
+.line--connected .cell .cell__role {
+  position: absolute;
+  left: 50%;
+  translate: -50% 0;
+  white-space: nowrap;
+}
+
+.line--connected .cell figcaption {
+  top: 100%;
+}
+
+.line--connected .cell .cell__role {
+  top: calc(100% + 1.7em);
+}

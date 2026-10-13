@@ -25,7 +25,7 @@ export function renderTablet(
     ...lines.map((line) =>
       h(
         "div",
-        { class: "line" },
+        { class: language.connected ? "line line--connected" : "line" },
         ...line.cells.map((cell) => {
           const roleName = roleKey[cell.role];
           return h(
