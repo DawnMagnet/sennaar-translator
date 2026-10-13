@@ -1,17 +1,32 @@
-import { entries } from "../engine/lexicon";
 import type { Entry, Pos } from "../engine/types";
-import { label, posKey, t, type Lang } from "../i18n";
+import { label, posKey, t, typedForm, type Lang } from "../i18n";
+import type { LanguageModule } from "../languages/types";
 import { glyphElement } from "../render/glyphs";
 import { h } from "./dom";
 
-const ORDER: Pos[] = ["pronoun", "person", "verb", "object", "concept", "place", "other"];
+const ORDER: Pos[] = [
+  "pronoun",
+  "person",
+  "verb",
+  "object",
+  "concept",
+  "place",
+  "adjective",
+  "number",
+  "other",
+];
 
-export function renderDictionary(lang: Lang, onPick: (entry: Entry) => void): HTMLElement {
+export function renderDictionary(
+  lang: Lang,
+  language: LanguageModule,
+  onPick: (entry: Entry) => void,
+): HTMLElement {
   return h(
     "div",
     { class: "dictionary" },
     ...ORDER.map((pos) => {
-      const group = entries.filter((e) => e.pos === pos);
+      const group = language.lexicon.entries.filter((e) => e.pos === pos);
+      if (group.length === 0) return null;
       return h(
         "section",
         { class: "dictionary__group" },
@@ -19,21 +34,26 @@ export function renderDictionary(lang: Lang, onPick: (entry: Entry) => void): HT
         h(
           "div",
           { class: "dictionary__grid" },
-          ...group.map((entry) =>
-            h(
+          ...group.map((entry) => {
+            const typable = typedForm(lang, entry) !== undefined;
+            return h(
               "button",
               {
                 type: "button",
                 class: "card",
-                title: `${entry.en.join(", ")}\n${entry.zh.join("、")}`,
+                disabled: !typable,
+                title: [
+                  entry.en.join(", ") || label("en", entry),
+                  entry.zh.join("、") || label("zh", entry),
+                ].join("\n"),
                 onclick: () => onPick(entry),
               },
-              glyphElement(entry.id),
+              glyphElement(language, entry.id),
               h("span", { class: "card__label" }, label(lang, entry)),
               entry.inferred &&
                 h("i", { class: "card__inferred", title: t(lang, "inferred") }, "?"),
-            ),
-          ),
+            );
+          }),
         ),
       );
     }),

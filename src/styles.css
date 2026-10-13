@@ -425,6 +425,10 @@ button:focus-visible,
   gap: 22px;
 }
 
+.line--connected {
+  column-gap: 0 !important;
+}
+
 .line {
   display: flex;
   flex-wrap: wrap;
@@ -480,6 +484,13 @@ button:focus-visible,
 }
 .cell[data-role="O"] {
   --role: var(--ochre);
+}
+.cell[data-role="mod"] {
+  --role: var(--ochre);
+}
+.cell[data-role="plural"],
+.cell[data-role="question"] {
+  --role: var(--teal);
 }
 .cell[data-role="neg"] {
   --role: var(--wine);
@@ -787,4 +798,10 @@ button:focus-visible,
     animation: none !important;
     transition: none !important;
   }
+}
+
+.blurb {
+  margin: -6px 0 14px;
+  font-size: 0.92rem;
+  opacity: 0.85;
 }

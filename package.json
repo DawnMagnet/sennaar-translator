@@ -4,8 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "extract": "node tools/extract-glyphs.ts third_party/devotee/Devotee.ttf src/data/devotee.glyphs.json",
-    "favicon": "node tools/make-favicon.ts src/data/devotee.glyphs.json public/favicon.svg"
+    "extract": "node tools/extract-devotee.ts third_party/devotee/Devotee.ttf src/languages/devotee/glyphs.json && node tools/extract-svg-glyphs.ts",
+    "favicon": "node tools/make-favicon.ts src/languages/devotee/glyphs.json public/favicon.svg"
   },
   "devDependencies": {
     "@types/fontkit": "^2.0.9",

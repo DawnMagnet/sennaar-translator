@@ -1,4 +1,5 @@
-import { HEIGHT, TOP, boxWidth, originX, pathOf } from "./glyphs";
+import type { LanguageModule } from "../languages/types";
+import { boxWidth, cellBox, glyphOf, originX } from "./glyphs";
 
 export interface ExportCell {
   glyph: string;
@@ -11,12 +12,14 @@ export interface ExportOptions {
   captionColor?: string;
 }
 
-const GAP = 120;
-const MARGIN = 220;
-const MAX_LINE_WIDTH = 7200;
-const LINE_GAP = 140;
-const CAPTION_BAND = 230;
-const PIXELS_PER_UNIT = 0.16;
+/** Layout constants are fractions of the cell height, so every language exports at the same visual scale. */
+const GAP = 0.11;
+const MARGIN = 0.2;
+const LINE_GAP = 0.13;
+const CAPTION_BAND = 0.22;
+const MAX_LINE_WIDTH = 6.8;
+const MIN_CONTENT_WIDTH = 1.1;
+const CELL_PIXELS = 170;
 
 const escapeXml = (s: string) =>
   s.replace(
@@ -24,53 +27,68 @@ const escapeXml = (s: string) =>
     (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&apos;" })[c]!,
   );
 
-function wrap(cells: ExportCell[]): ExportCell[][] {
-  const rows: ExportCell[][] = [];
-  let row: ExportCell[] = [];
-  let width = 0;
-  for (const cell of cells) {
-    const w = boxWidth(cell.glyph) + GAP;
-    if (row.length && width + w > MAX_LINE_WIDTH) {
-      rows.push(row);
-      row = [];
-      width = 0;
-    }
-    row.push(cell);
-    width += w;
-  }
-  if (row.length) rows.push(row);
-  return rows;
-}
+const num = (v: number) => String(Math.round(v * 100) / 100);
 
-export function composeSvg(lines: ExportCell[][], options: ExportOptions): string {
+export function composeSvg(
+  language: LanguageModule,
+  lines: ExportCell[][],
+  options: ExportOptions,
+): string {
+  const { height: H, top } = cellBox(language);
+  const gap = language.connected ? 0 : H * GAP;
+  const widthOf = (cell: ExportCell) => boxWidth(language, glyphOf(language, cell.glyph));
+
+  const wrap = (cells: ExportCell[]): ExportCell[][] => {
+    const rows: ExportCell[][] = [];
+    let row: ExportCell[] = [];
+    let width = 0;
+    for (const cell of cells) {
+      const w = widthOf(cell) + gap;
+      if (row.length && width + w > H * MAX_LINE_WIDTH) {
+        rows.push(row);
+        row = [];
+        width = 0;
+      }
+      row.push(cell);
+      width += w;
+    }
+    if (row.length) rows.push(row);
+    return rows;
+  };
+
   const hasCaptions = lines.some((line) => line.some((c) => c.caption));
-  const band = hasCaptions ? CAPTION_BAND : 0;
+  const band = hasCaptions ? H * CAPTION_BAND : 0;
   const rows = lines.flatMap(wrap);
 
-  const rowWidth = (row: ExportCell[]) =>
-    row.reduce((sum, c) => sum + boxWidth(c.glyph) + GAP, -GAP);
-  const contentWidth = Math.max(1200, ...rows.map(rowWidth));
-  const width = contentWidth + MARGIN * 2;
-  const rowHeight = HEIGHT + band + LINE_GAP;
-  const height = rows.length * rowHeight - LINE_GAP + MARGIN * 2;
+  const rowWidth = (row: ExportCell[]) => row.reduce((sum, c) => sum + widthOf(c) + gap, -gap);
+  const margin = H * MARGIN;
+  const contentWidth = Math.max(H * MIN_CONTENT_WIDTH, ...rows.map(rowWidth));
+  const width = contentWidth + margin * 2;
+  const rowHeight = H + band + H * LINE_GAP;
+  const height = rows.length * rowHeight - H * LINE_GAP + margin * 2;
+  const scale = CELL_PIXELS / H;
 
   const parts: string[] = [];
   rows.forEach((row, r) => {
-    let x = MARGIN + (contentWidth - rowWidth(row)) / 2;
-    const y = MARGIN + r * rowHeight;
+    let x = margin + (contentWidth - rowWidth(row)) / 2;
+    const y = margin + r * rowHeight;
     for (const cell of row) {
-      const w = boxWidth(cell.glyph);
+      const glyph = glyphOf(language, cell.glyph);
+      const w = boxWidth(language, glyph);
+      const paths = glyph.paths
+        .map(({ d, t }) => `<path d="${d}"${t ? ` transform="${t}"` : ""}/>`)
+        .join("");
       parts.push(
-        `<path transform="translate(${x - originX(cell.glyph)} ${y - TOP})" d="${pathOf(cell.glyph)}"/>`,
+        `<g transform="translate(${num(x - originX(language, glyph))} ${num(y + top - glyph.a)})">${paths}</g>`,
       );
       if (cell.caption) {
         parts.push(
-          `<text x="${x + w / 2}" y="${y + HEIGHT + 150}" text-anchor="middle" font-size="110" ` +
+          `<text x="${num(x + w / 2)}" y="${num(y + H + H * 0.14)}" text-anchor="middle" font-size="${num(H * 0.1)}" ` +
             `fill="${options.captionColor ?? options.color}" fill-opacity=".7" ` +
             `font-family="'Noto Serif SC','Source Han Serif SC','Songti SC',serif">${escapeXml(cell.caption)}</text>`,
         );
       }
-      x += w + GAP;
+      x += w + gap;
     }
   });
 
@@ -78,8 +96,8 @@ export function composeSvg(lines: ExportCell[][], options: ExportOptions): strin
     ? `<rect width="100%" height="100%" fill="${options.background}"/>`
     : "";
   return (
-    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" ` +
-    `width="${Math.round(width * PIXELS_PER_UNIT)}" height="${Math.round(height * PIXELS_PER_UNIT)}">` +
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${num(width)} ${num(height)}" ` +
+    `width="${Math.round(width * scale)}" height="${Math.round(height * scale)}">` +
     `${background}<g fill="${options.color}">${parts.join("")}</g></svg>`
   );
 }

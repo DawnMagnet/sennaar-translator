@@ -1,23 +1,22 @@
-import { DEVOTEE_LEXICON } from "../data/devotee.lexicon";
 import { PLURABLE, type Entry } from "./types";
 
-export const entries: readonly Entry[] = DEVOTEE_LEXICON;
-export const byId = new Map(entries.map((e) => [e.id, e]));
-
-const enIndex = new Map<string, Entry>();
-const zhIndex = new Map<string, Entry>();
-for (const entry of entries) {
-  for (const term of entry.en) if (!enIndex.has(term)) enIndex.set(term, entry);
-  for (const term of entry.zh) if (!zhIndex.has(term)) zhIndex.set(term, entry);
+export interface Lexicon {
+  entries: readonly Entry[];
+  byId: ReadonlyMap<string, Entry>;
+  maxZhTermLength: number;
+  maxPhraseWords: number;
+  /** Exact English lemma, no inflection. */
+  exactEn(term: string): Entry | undefined;
+  /** English word with simple inflection (plural, 3rd person, -ing, -ed, a few irregulars). */
+  lookupEn(word: string): { entry: Entry; plural: boolean } | undefined;
+  /** Multi-word English phrase, e.g. "my people". */
+  lookupPhrase(words: string[]): Entry | undefined;
+  entryForZh(term: string): Entry | undefined;
+  suggestEn(word: string, limit?: number): Entry[];
+  suggestZh(source: string, limit?: number): Entry[];
 }
 
-export const enTerms: readonly string[] = [...enIndex.keys()];
-export const zhTerms: readonly string[] = [...zhIndex.keys()];
-export const maxZhTermLength = Math.max(...zhTerms.map((t) => t.length));
-
 export const isPlurable = (entry: Entry) => PLURABLE.has(entry.pos);
-export const entryForZh = (term: string) => zhIndex.get(term);
-export const entryForEn = (term: string) => enIndex.get(term);
 
 const IRREGULAR: Record<string, readonly [lemma: string, plural: boolean]> = {
   men: ["man", true],
@@ -56,19 +55,6 @@ function* lemmaCandidates(word: string): Generator<readonly [lemma: string, viaS
   }
 }
 
-export function lookupEn(word: string): { entry: Entry; plural: boolean } | undefined {
-  const irregular = IRREGULAR[word];
-  if (irregular) {
-    const entry = enIndex.get(irregular[0]);
-    if (entry) return { entry, plural: irregular[1] && isPlurable(entry) };
-  }
-  for (const [lemma, viaS] of lemmaCandidates(word)) {
-    const entry = enIndex.get(lemma);
-    if (entry) return { entry, plural: viaS && isPlurable(entry) };
-  }
-  return undefined;
-}
-
 /** Levenshtein distance where swapping two adjacent letters costs one edit. */
 function editDistance(a: string, b: string): number {
   const d = Array.from({ length: a.length + 1 }, (_, i) => [i, ...Array<number>(b.length).fill(0)]);
@@ -95,26 +81,63 @@ function uniqueEntries(ranked: Iterable<Entry>, limit: number): Entry[] {
   return out;
 }
 
-export function suggestEn(word: string, limit = 3): Entry[] {
-  const maxDistance = word.length >= 4 ? 2 : 1;
-  const scored = enTerms
-    .map((term) => {
-      const near = word.length >= 3 && (term.startsWith(word) || word.startsWith(term));
-      return { term, score: near ? 0 : editDistance(word, term) };
-    })
-    .filter((s) => s.score <= maxDistance)
-    .sort((a, b) => a.score - b.score);
-  return uniqueEntries(
-    scored.map((s) => enIndex.get(s.term)!),
-    limit,
-  );
-}
+export function createLexicon(entries: readonly Entry[]): Lexicon {
+  const byId = new Map(entries.map((e) => [e.id, e]));
+  const enIndex = new Map<string, Entry>();
+  const zhIndex = new Map<string, Entry>();
+  for (const entry of entries) {
+    for (const term of entry.en) if (!enIndex.has(term)) enIndex.set(term, entry);
+    for (const term of entry.zh) if (!zhIndex.has(term)) zhIndex.set(term, entry);
+  }
+  const enTerms = [...enIndex.keys()].filter((t) => !t.includes(" "));
+  const zhTerms = [...zhIndex.keys()];
 
-export function suggestZh(source: string, limit = 3): Entry[] {
-  const chars = new Set(source);
-  const hits = zhTerms.filter((term) => [...term].some((c) => chars.has(c)));
-  return uniqueEntries(
-    hits.map((term) => zhIndex.get(term)!),
-    limit,
-  );
+  return {
+    entries,
+    byId,
+    maxZhTermLength: Math.max(...zhTerms.map((t) => t.length)),
+    maxPhraseWords: Math.max(1, ...[...enIndex.keys()].map((t) => t.split(" ").length)),
+    exactEn: (term) => enIndex.get(term),
+    entryForZh: (term) => zhIndex.get(term),
+    lookupPhrase: (words) => enIndex.get(words.join(" ")),
+
+    lookupEn(word) {
+      const exact = enIndex.get(word);
+      if (exact) return { entry: exact, plural: false };
+      const irregular = IRREGULAR[word];
+      if (irregular) {
+        const entry = enIndex.get(irregular[0]);
+        if (entry) return { entry, plural: irregular[1] && isPlurable(entry) };
+      }
+      for (const [lemma, viaS] of lemmaCandidates(word)) {
+        const entry = enIndex.get(lemma);
+        if (entry) return { entry, plural: viaS && isPlurable(entry) };
+      }
+      return undefined;
+    },
+
+    suggestEn(word, limit = 3) {
+      const maxDistance = word.length >= 4 ? 2 : 1;
+      const scored = enTerms
+        .map((term) => {
+          const near = word.length >= 3 && (term.startsWith(word) || word.startsWith(term));
+          return { term, score: near ? 0 : editDistance(word, term) };
+        })
+        .filter((s) => s.score <= maxDistance)
+        .sort((a, b) => a.score - b.score);
+      return uniqueEntries(
+        scored.map((s) => enIndex.get(s.term)!),
+        limit,
+      );
+    },
+
+    suggestZh(source, limit = 3) {
+      const chars = new Set(source);
+      const hits = zhTerms.filter((term) => [...term].some((c) => chars.has(c)));
+      return uniqueEntries(
+        hits.map((term) => zhIndex.get(term)!),
+        limit,
+      );
+    },
+  };
 }
