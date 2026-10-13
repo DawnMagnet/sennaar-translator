@@ -237,7 +237,8 @@ a.btn {
 
 main {
   display: grid;
-  gap: 24px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 18px;
   padding-bottom: 12px;
 }
 
@@ -375,7 +376,7 @@ button:focus-visible,
 /* ---------- Tablet (speech bubble) ---------- */
 
 .tablet {
-  padding: 18px 28px 30px;
+  padding: 26px 28px 18px;
   border-width: 3.5px;
   border-radius: 34px;
   background: var(--paper);
@@ -387,8 +388,9 @@ button:focus-visible,
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding-bottom: 14px;
-  border-bottom: 2px dashed rgb(123 29 67 / 0.35);
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 2px dashed rgb(123 29 67 / 0.35);
 }
 
 .toggles,
@@ -419,8 +421,8 @@ button:focus-visible,
 }
 
 .tablet__body {
-  min-height: 190px;
-  padding-top: 22px;
+  min-height: 150px;
+  padding-top: 0;
   display: grid;
   align-content: center;
 }
@@ -773,39 +775,6 @@ button:focus-visible,
 
 /* ---------- Small screens & motion ---------- */
 
-@media (max-width: 760px) {
-  :root {
-    --scene-h: 520px;
-  }
-  .scene__tower {
-    left: -40px;
-    opacity: 0.85;
-  }
-  .scene__figures {
-    right: -44px;
-    top: auto;
-    height: 58%;
-  }
-  .scene__cloud--a,
-  .scene__birds {
-    display: none;
-  }
-  main {
-    margin-top: 84px;
-  }
-  .panel,
-  .tablet {
-    padding-inline: 16px;
-  }
-  .corner {
-    top: 10px;
-    right: 10px;
-  }
-  .github__label {
-    display: none;
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -816,7 +785,7 @@ button:focus-visible,
 }
 
 .blurb {
-  margin: -6px 0 14px;
+  margin: 0 0 12px;
   font-size: 0.92rem;
   opacity: 0.85;
 }
@@ -827,6 +796,11 @@ button:focus-visible,
 
 .line--connected .cell {
   position: relative;
+}
+
+/* Bard cells reserve room under the baseline for place dots, so the ink is smaller than in other languages. */
+.line--connected .cell .glyph {
+  height: clamp(96px, 13vw, 132px);
 }
 
 .line--connected .cell figcaption,
@@ -843,4 +817,118 @@ button:focus-visible,
 
 .line--connected .cell .cell__role {
   top: calc(100% + 1.7em);
+}
+
+@media (max-width: 760px) {
+  :root {
+    --scene-h: 400px;
+  }
+  .scene__tower {
+    left: -40px;
+    opacity: 0.85;
+  }
+  .scene__figures {
+    right: -44px;
+    top: auto;
+    height: 46%;
+  }
+  .scene__cloud--a,
+  .scene__birds {
+    display: none;
+  }
+  .corner {
+    top: 10px;
+    right: 10px;
+  }
+  .github__label {
+    display: none;
+  }
+
+  .top {
+    padding-top: 14px;
+    text-align: left;
+  }
+  .brand .logo {
+    width: min(250px, 56vw);
+    margin: 0;
+  }
+  .brand__text h1 {
+    margin-top: 4px;
+    font-size: 1.15rem;
+  }
+  .brand__text p {
+    font-size: 0.82rem;
+  }
+  .tabs {
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    overflow-x: auto;
+    margin: 10px auto 14px;
+    padding: 0 2px 6px;
+    scrollbar-width: none;
+  }
+  .tab {
+    flex: none;
+    padding: 6px 12px;
+    font-size: 0.9rem;
+  }
+
+  main {
+    gap: 14px;
+  }
+  .panel,
+  .tablet {
+    padding: 14px 14px 16px;
+  }
+  .tablet {
+    padding-top: 18px;
+    border-radius: 26px;
+  }
+  .panel__title {
+    margin-bottom: 8px;
+    padding-bottom: 7px;
+    font-size: 1.05rem;
+  }
+  textarea {
+    height: 4.6rem;
+    padding: 10px 12px;
+    font-size: 1.1rem;
+  }
+  .hint--input {
+    display: none;
+  }
+  .examples {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    margin-top: 10px;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+  }
+  .examples > span,
+  .pill {
+    flex: none;
+    white-space: nowrap;
+  }
+
+  .line {
+    gap: 10px;
+  }
+  .cell .glyph {
+    height: clamp(58px, 15vw, 80px);
+  }
+  .line--connected .cell .glyph {
+    height: clamp(76px, 22vw, 104px);
+  }
+  .tablet__bar {
+    gap: 10px;
+    margin-top: 10px;
+    padding-top: 10px;
+  }
+  .actions {
+    gap: 8px;
+  }
+  .btn {
+    padding: 6px 12px;
+    font-size: 0.85rem;
+  }
 }

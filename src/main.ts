@@ -137,13 +137,15 @@ function build(): void {
     for (const b of exportButtons) b.disabled = empty;
   }
 
-  const ACTION_ICONS: Record<"exportSvg" | "exportPng" | "copyLink", IconName> = {
+  type ActionKey = "exportSvg" | "exportPng" | "copyImage" | "copyLink";
+  const ACTION_ICONS: Record<ActionKey, IconName> = {
     exportSvg: "download",
     exportPng: "image",
+    copyImage: "copy",
     copyLink: "link",
   };
 
-  const actionButton = (key: "exportSvg" | "exportPng" | "copyLink", onclick: () => void) => {
+  const actionButton = (key: ActionKey, onclick: () => void) => {
     const button = h(
       "button",
       { type: "button", class: "btn", onclick },
@@ -247,9 +249,7 @@ function build(): void {
         "section",
         { class: "panel" },
         h("label", { class: "panel__title", for: "input" }, t(lang, "inputLabel")),
-        h("p", { class: "blurb" }, language.content.blurb[lang]),
         textarea,
-        h("p", { class: "hint" }, t(lang, "inputHint")),
         h(
           "div",
           { class: "examples" },
@@ -262,10 +262,12 @@ function build(): void {
             ),
           ),
         ),
+        h("p", { class: "hint hint--input" }, t(lang, "inputHint")),
       ),
       h(
         "section",
         { class: "tablet" },
+        tabletBody,
         h(
           "div",
           { class: "tablet__bar" },
@@ -286,6 +288,20 @@ function build(): void {
                 toast(t(lang, "exportFailed"));
               }
             }),
+            actionButton("copyImage", async () => {
+              try {
+                if (typeof ClipboardItem === "undefined" || !navigator.clipboard?.write) {
+                  throw new Error("Clipboard images are not supported");
+                }
+                // Passing the promise itself keeps Safari happy: the write must start inside the click.
+                await navigator.clipboard.write([
+                  new ClipboardItem({ "image/png": svgToPng(buildSvg()) }),
+                ]);
+                toast(t(lang, "imageCopied"));
+              } catch {
+                toast(t(lang, "copyImageFailed"));
+              }
+            }),
             actionButton("copyLink", async () => {
               try {
                 await navigator.clipboard.writeText(location.href);
@@ -296,7 +312,6 @@ function build(): void {
             }),
           ),
         ),
-        tabletBody,
       ),
       h(
         "section",
@@ -319,6 +334,7 @@ function build(): void {
         "section",
         { class: "panel" },
         h("h2", { class: "panel__title" }, t(lang, "grammar")),
+        h("p", { class: "blurb" }, language.content.blurb[lang]),
         renderNotes(lang, language),
       ),
     ),
