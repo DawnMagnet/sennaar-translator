@@ -43,6 +43,17 @@ describe("Alchemist numbers", () => {
     expect(ids("你找到5039")).toEqual(["you", "find", "num:5039"]);
   });
 
+  it("keeps a list of numbers in the order it was typed", () => {
+    expect(ids("1234 5678")).toEqual(["num:1234", "num:5678"]);
+    expect(ids("You find 1234 5678")).toEqual(["you", "find", "num:1234", "num:5678"]);
+    expect(ids("one two three")).toEqual(["one", "two", "three"]);
+  });
+
+  it("still writes a number after the noun it counts", () => {
+    expect(ids("I find 3 books")).toEqual(["me", "find", "book", "plural", "three"]);
+    expect(ids("three copper mines")).toEqual(["mine", "plural", "copper", "three"]);
+  });
+
   it("rejects numbers above 9999", () => {
     const item = translate("You find 12345", alchemist).lines[0]!.items.at(-1)!;
     expect(item).toMatchObject({ kind: "unknown", hint: "number-range" });

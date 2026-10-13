@@ -17,12 +17,22 @@ const isNounLike = ({ item, role }: Tagged) =>
   item.kind === "number" ||
   (item.kind === "word" && NOUN_LIKE.has(item.entry.pos) && ["S", "O", "mod"].includes(role));
 
+const isNumber = ({ item }: Tagged) =>
+  item.kind === "number" || (item.kind === "word" && item.entry.pos === "number");
+
 /** Modifiers follow the noun they describe, so a run like "copper mine" is written head first. */
 function headFirst(tagged: Tagged[]): Tagged[] {
   const out: Tagged[] = [];
   let run: Tagged[] = [];
   const flush = () => {
-    out.push(...run.reverse());
+    // Consecutive numbers are a list, not modifiers of each other, so they stay together in order.
+    const groups: Tagged[][] = [];
+    for (const t of run) {
+      const last = groups.at(-1);
+      if (isNumber(t) && last && isNumber(last[0]!)) last.push(t);
+      else groups.push([t]);
+    }
+    out.push(...groups.reverse().flat());
     run = [];
   };
   for (const t of tagged) {
